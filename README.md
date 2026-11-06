@@ -1,0 +1,159 @@
+# Mão robótica com Python e Arduino
+
+Aplicação local que acompanha uma mão pela webcam e transforma a flexão dos cinco dedos em comandos para Arduino + PCA9685. Cada dedo controla um servo, na ordem **polegar, indicador, médio, anelar e mínimo**.
+
+O Python usa OpenCV para a câmera e MediaPipe Tasks Hand Landmarker para os 21 pontos da mão. O Arduino aplica os limites de pulso e a rampa de velocidade. A inferência roda localmente, sem depender de uma API remota. A instalação e o download do modelo precisam de internet; bibliotecas de terceiros podem emitir telemetria própria.
+
+## Começar no Windows
+
+Execute os comandos no PowerShell, dentro de `C:\ProjetosPython\MaoRobotica`:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[vision]"
+.\.venv\Scripts\python.exe scripts/download_model.py
+```
+
+Python 3.11 ou superior. A instalação com visão exige que MediaPipe, OpenCV e NumPy tenham pacotes disponíveis para sua plataforma. As versões efetivamente verificadas neste ambiente ficam em `requirements-tested.txt` após a validação. Não é necessário ativar o ambiente virtual nem mudar a política de execução do PowerShell.
+
+Para reproduzir as versões verificadas no Windows com Python 3.14, instale primeiro `python -m pip install -r requirements-tested.txt` dentro do ambiente virtual, depois `python -m pip install -e ".[vision]"`. Consulte [o registro de validação](docs/VALIDACAO.md) para o que foi testado e o que depende do hardware.
+
+Teste primeiro sem câmera e sem Arduino:
+
+```powershell
+.\.venv\Scripts\python.exe -m mao_robotica demo --seconds 3
+```
+
+Para abrir a webcam em **simulação**, sem enviar comandos:
+
+```powershell
+.\.venv\Scripts\python.exe -m mao_robotica camera
+```
+
+Em `config/hand.json`, `camera` é o índice da câmera e `hand` é `Right` ou `Left`, relativo à pessoa. A inferência recebe a imagem original; só a visualização é espelhada. Drivers que já espelham a captura podem exigir trocar a seleção. O programa aceita somente uma mão visível e rejeita a cena se encontrar duas.
+
+## Calibrar a leitura da mão
+
+1. Mantenha a mão aberta, de frente para a câmera, estável por pelo menos um segundo. Pressione **O**.
+2. Feche os cinco dedos, incluindo o polegar sobre a palma, mantenha por um segundo e pressione **C**.
+3. Verifique se cada percentual varia aproximadamente entre 0 e 100% conforme move o dedo.
+
+A calibração usa a mediana das amostras recentes, rejeita movimento excessivo e amplitudes insuficientes. Somente um par completo válido é salvo no JSON. As referências iniciais `0..1` são provisórias: calibre antes de controlar a mão física. É possível manter perfis separados:
+
+```powershell
+Copy-Item config/hand.json config/minha-mao.local.json
+.\.venv\Scripts\python.exe -m mao_robotica camera --config config/minha-mao.local.json
+```
+
+O polegar combina flexão e proximidade à base do mínimo. Trata-se de uma aproximação para um único servo; oposição e flexão não são controladas separadamente. Oclusões, perfil da mão e iluminação ruim afetam a leitura. A classificação esquerda/direita não identifica a pessoa.
+
+## Montagem elétrica
+
+Referência inicial: **Arduino Uno R3 ou Nano clássico de 5 V**, PCA9685 em `0x40`, cinco servos posicionais e fonte externa dimensionada para eles. Não usar servos de rotação contínua para esse controle de posição. Para outras placas, confirme pinagem I²C e tensão lógica antes de ligar.
+
+| Origem | Destino |
+|---|---|
+| Arduino 5 V | VCC lógico do PCA9685 |
+| Arduino GND | GND do PCA9685 e negativo da fonte dos servos |
+| Arduino A4 / SDA | SDA do PCA9685 |
+| Arduino A5 / SCL | SCL do PCA9685 |
+| Arduino D7 | OE do PCA9685 |
+| Resistor de 1 kΩ | Entre OE e VCC, mantendo saídas desabilitadas no reset |
+| Positivo da fonte dos servos | V+ / borne de alimentação dos servos |
+| Negativo da fonte dos servos | GND comum |
+| Canais 0, 1, 2, 3, 4 | Polegar, indicador, médio, anelar, mínimo |
+
+Confira a ordem sinal/V+/GND de cada conector. **Não alimente os cinco servos pelo 5 V do Arduino.** A tensão depende do modelo do servo; a fonte, fios e distribuição devem suportar a corrente de pico simultânea. Mantenha V+ dos motores separado do 5 V do Arduino. Um interruptor na alimentação dos servos permite cortar a energia independentemente do software.
+
+O sinal OE faz parte desta implementação. Muitos módulos têm pull-down em OE; o pull-up externo deve prevalecer sobre ele. O valor de 1 kΩ atende ao caso usual de pull-down de 10 kΩ: confirme o circuito do seu módulo e meça OE em nível alto durante o reset. Parar o PWM não corta a alimentação e não garante retenção de carga; o comportamento sem sinal depende do servo. Esta versão é destinada à bancada sem objetos apoiados na mão.
+
+## Firmware e calibração mecânica
+
+Abra `firmware/robotic_hand/robotic_hand.ino` na Arduino IDE. Instale **Adafruit PWM Servo Driver Library** pelo gerenciador de bibliotecas, incluindo **Adafruit BusIO**. Selecione a placa e a porta e carregue o sketch.
+
+As configurações ficam em `firmware/robotic_hand/servo_config.h`:
+
+- `CHANNELS`: canal de cada dedo, sem repetição.
+- `OPEN_US` e `CLOSED_US`: pulsos medidos para abertura e fechamento. A inversão é feita trocando os extremos.
+- `PWM_HZ`: 50 Hz inicialmente; confirme a frequência suportada pelos servos.
+- `MAX_STEP_US`: passo máximo a cada 20 ms, inicialmente 8 µs.
+- `CALIBRATED`: vem `false`, portanto o firmware recusa `ARM` até você configurar a montagem.
+
+Os valores de 1300–1700 µs incluídos são ilustrativos. Não representam limites seguros universais. Para comissionar:
+
+1. Desacople os cabos/elos e conecte inicialmente apenas um servo. Consulte os pulsos e a tensão especificados pelo fabricante.
+2. Configure inicialmente os dois extremos desse servo para um pulso central conhecido, e coloque `CALIBRATED = true` para o ensaio de bancada. Regrave o firmware.
+3. Use o comando manual abaixo. Desenergize antes de mudar ligações. Amplie os extremos em pequenos passos, regravando o firmware, e encontre a faixa necessária sem atingir batentes.
+4. Repita por dedo, confira o sentido, acople a mecânica sem tensão excessiva e reduza os limites se necessário. Só então conecte os cinco servos e execute com visão.
+
+Sem sensores externos, o Arduino não conhece a posição real após ligar ou desabilitar os servos. **O primeiro pulso ao ativar pode reposicionar o eixo**, mesmo com a rampa aplicada aos comandos seguintes. Não há controle de força nem detecção de obstáculos.
+
+## Operar com Arduino
+
+Feche o Monitor Serial da IDE antes de abrir a porta pelo Python:
+
+```powershell
+.\.venv\Scripts\python.exe -m mao_robotica ports
+.\.venv\Scripts\python.exe -m mao_robotica manual --port COM3 --values 0 0 0 0 0 --seconds 3
+.\.venv\Scripts\python.exe -m mao_robotica camera --port COM3
+```
+
+Troque `COM3` pela porta listada. No modo manual, os valores vão de `0` a `1000`; **esse comando ativa os servos imediatamente** e envia o alvo pelo período solicitado. Teste um dedo usando valores pequenos, com os demais em zero. Ao terminar, o PWM é desabilitado.
+
+Na janela da câmera:
+
+| Tecla | Ação |
+|---|---|
+| A | Ativar, após pelo menos 0,5 s de detecção contínua |
+| Espaço | Desabilitar o acionamento |
+| O / C | Calibrar aberta / fechada; desarma o hardware |
+| Q / Esc | Encerrar e desabilitar o acionamento |
+
+A perda de mão por 250 ms desarma o controle; perdas menores não atualizam os alvos. O firmware desabilita as saídas após 500 ms sem comando válido, inclusive se o Python travar. Reconexão, reset e perda prolongada exigem nova ativação; falhas de protocolo ou timeout encerram a aplicação com uma mensagem. Reinicie-a depois de resolver a causa.
+
+## Protocolo e implementação
+
+USB serial a 115200 baud, ASCII, uma mensagem por linha. Ambos os lados usam `PAYLOAD*HH\n`, sendo `HH` o XOR hexadecimal dos bytes do payload. O checksum detecta erros simples; não é autenticação nem garantia contra toda corrupção.
+
+| Payload | Função |
+|---|---|
+| `HELLO` | Desarma e solicita `READY,1` |
+| `ARM` | Solicita acionamento; responde `ARMED` ou `ERR,...` |
+| `SET,seq,p,i,m,a,n` | Sequência 0–65535 e cinco valores 0–1000 |
+| `STOP` | Desabilita OE e responde `DISARMED` |
+| `ACK,seq` | Confirma aceitação do alvo, não a posição física |
+| `FAULT,TIMEOUT` / `FAULT,I2C` | Falha que desarma o controle |
+
+As mensagens são montadas em `protocol.py`. O firmware valida a linha inteira antes de atualizar qualquer dedo, rejeita números fora da faixa e sequências repetidas/antigas, e usa buffer fixo sem `String` dinâmica. A rampa não usa `delay()`. Configuração de servo fica no firmware para que os limites continuem valendo independentemente do Python.
+
+```text
+src/mao_robotica/
+  main.py            CLI, janela, calibração e ciclo de controle
+  tracking.py        MediaPipe Tasks e desenho dos pontos
+  finger_mapping.py  Ângulos 3D e normalização por dedo
+  filters.py         Suavização exponencial dependente do tempo
+  serial_client.py   Conexão, ativação e confirmações
+  protocol.py        Enquadramento, checksum e mensagens
+  config.py          Validação e persistência do perfil
+firmware/robotic_hand/
+  robotic_hand.ino   Recepção, watchdog e controle do PCA9685
+  servo_config.h    Canais e limites mecânicos
+scripts/download_model.py
+tests/
+```
+
+## Verificação
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+Os testes cobrem geometria, invariância a rotação/escala, filtros, calibração, corrupção de mensagens, porta simulada, timeout e reset. A validação física depende da montagem: confira primeiro um servo, depois os cinco, a perda da mão, desconexão USB e corte de alimentação. Testes de software não verificam torque, alimentação ou batentes mecânicos.
+
+## Referências
+
+- [MediaPipe Hand Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker?tab=Python)
+- [Modelo oficial float16, versão 1](https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task)
+- [Ligação e alimentação do PCA9685 — Adafruit](https://learn.adafruit.com/16-channel-pwm-servo-driver?view=all)
+- [Biblioteca Arduino — Adafruit](https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library)
+- [pySerial](https://pyserial.readthedocs.io/en/latest/pyserial_api.html)
