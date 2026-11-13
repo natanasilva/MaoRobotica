@@ -77,10 +77,13 @@ def run_camera(args):
     try:
         tracker = Tracker(config)
         camera = cv2.VideoCapture(config["camera"])
-        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         if not camera.isOpened():
             raise RuntimeError("Não foi possível abrir a webcam")
+        # A webcam pode não suportar 1280x720; nesse caso o OpenCV usa outra resolução.
+        print(f"Resolução da câmera: {int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))}x"
+              f"{int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))}")
         if args.port:
             client = SerialClient(args.port)
         smoother = Smoother(config["smoothing_seconds"])
