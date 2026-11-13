@@ -40,6 +40,33 @@ def run_manual(args):
         client.close()
 
 
+WINDOW = "Mao Robotica"
+
+
+def fit_to_window(image, window):
+    """Amplia a imagem para o tamanho da janela, mantendo a proporção (barras pretas)."""
+    import cv2
+    try:
+        _, _, width, height = cv2.getWindowImageRect(window)
+    except cv2.error:
+        return image
+    if width < 50 or height < 50:
+        return image
+    image_h, image_w = image.shape[:2]
+    scale = min(width / image_w, height / image_h)
+    new_w, new_h = max(1, round(image_w * scale)), max(1, round(image_h * scale))
+    resized = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+    top, left = (height - new_h) // 2, (width - new_w) // 2
+    return cv2.copyMakeBorder(resized, top, height - new_h - top, left, width - new_w - left,
+                              cv2.BORDER_CONSTANT, value=(0, 0, 0))
+
+
+def set_fullscreen(window, enabled):
+    import cv2
+    cv2.setWindowProperty(window, cv2.WND_PROP_FULLSCREEN,
+                          cv2.WINDOW_FULLSCREEN if enabled else cv2.WINDOW_NORMAL)
+
+
 def run_camera(args):
     import cv2
     from .serial_client import SerialClient
@@ -63,15 +90,22 @@ def run_camera(args):
         valid_since = None
         next_send = 0.0
         values = [0.0] * 5
-        message = "O: aberta | C: fechada | A: ativar | ESPACO: parar | Q: sair"
+        message = "O: aberta | C: fechada | A: ativar | ESPACO: parar | F: tela cheia | Q: sair"
         print(message)
+        # WINDOW_NORMAL permite redimensionar; a janela começa em tela cheia.
+        cv2.namedWindow(WINDOW, cv2.WINDOW_NORMAL)
+        fullscreen = True
+        set_fullscreen(WINDOW, fullscreen)
         print("Calibração: mantenha cada postura por 1 segundo antes de O/C.")
         while True:
             ok, frame = camera.read()
             now = time.monotonic()
             if not ok:
                 raise RuntimeError("Falha na leitura da webcam")
-            # Inferência na imagem original. Espelhamento somente na visualização.
+            # O MediaPipe classifica esquerda/direita supondo imagem espelhada (selfie).
+            # Espelhar antes da inferência faz "Right" corresponder à mão direita da pessoa.
+            # As flexões usam só ângulos e distâncias, então não mudam com o espelhamento.
+            frame = cv2.flip(frame, 1)
             detection = tracker.detect(frame, now)
             raw = None
             if detection:
@@ -100,19 +134,25 @@ def run_camera(args):
                 if detection and client.armed and now >= next_send:
                     client.send(values)
                     next_send = now + 1 / config["send_hz"]
-            display = cv2.flip(frame, 1)
+            display = fit_to_window(frame, WINDOW)
+            # Texto desenhado após a ampliação, com escala proporcional, para ficar nítido.
+            s = max(1.0, display.shape[0] / 480)
+            thick = max(1, round(s))
             state = "SIMULACAO" if not client else ("ATIVO" if client.armed else "DESARMADO")
             cv2.putText(display, f"{state} | Mao: {config['hand']} | {'OK' if detection else 'AUSENTE/AMBIGUA'}",
-                        (10, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 220, 255), 1)
+                        (int(10*s), int(24*s)), cv2.FONT_HERSHEY_SIMPLEX, 0.55*s, (0, 220, 255), thick)
             for i, (finger, value) in enumerate(zip(FINGERS, values)):
-                cv2.putText(display, f"{finger:6}: {value*100:5.1f}%", (10, 55 + i*25),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1)
-            cv2.putText(display, message[:95], (10, display.shape[0]-18),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 220, 255), 1)
-            cv2.imshow("Mao Robotica", display)
+                cv2.putText(display, f"{finger:6}: {value*100:5.1f}%", (int(10*s), int((55 + i*25)*s)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.55*s, (255, 255, 255), thick)
+            cv2.putText(display, message[:95], (int(10*s), display.shape[0] - int(18*s)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.38*s, (0, 220, 255), thick)
+            cv2.imshow(WINDOW, display)
             key = cv2.waitKey(1) & 0xFF
-            if key in (ord("q"), 27) or cv2.getWindowProperty("Mao Robotica", cv2.WND_PROP_VISIBLE) < 1:
+            if key in (ord("q"), 27) or cv2.getWindowProperty(WINDOW, cv2.WND_PROP_VISIBLE) < 1:
                 break
+            if key == ord("f"):
+                fullscreen = not fullscreen
+                set_fullscreen(WINDOW, fullscreen)
             if key == 32 and client:
                 client.stop()
                 message = "Desarmado. A: ativar novamente."

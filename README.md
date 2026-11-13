@@ -30,7 +30,7 @@ Para abrir a webcam em **simulação**, sem enviar comandos:
 .\.venv\Scripts\python.exe -m mao_robotica camera
 ```
 
-Em `config/hand.json`, `camera` é o índice da câmera e `hand` é `Right` ou `Left`, relativo à pessoa. A inferência recebe a imagem original; só a visualização é espelhada. Drivers que já espelham a captura podem exigir trocar a seleção. O programa aceita somente uma mão visível e rejeita a cena se encontrar duas.
+Em `config/hand.json`, `camera` é o índice da câmera e `hand` é `Right` ou `Left`, relativo à pessoa. A imagem é espelhada antes da inferência, como o MediaPipe espera para classificar esquerda/direita; a tela mostra a mesma imagem espelhada. Drivers que já espelham a captura podem exigir trocar a seleção. O programa aceita somente uma mão visível e rejeita a cena se encontrar duas.
 
 ## Calibrar a leitura da mão
 
@@ -107,6 +107,7 @@ Na janela da câmera:
 | A | Ativar, após pelo menos 0,5 s de detecção contínua |
 | Espaço | Desabilitar o acionamento |
 | O / C | Calibrar aberta / fechada; desarma o hardware |
+| F | Alternar tela cheia / janela redimensionável (abre em tela cheia) |
 | Q / Esc | Encerrar e desabilitar o acionamento |
 
 A perda de mão por 250 ms desarma o controle; perdas menores não atualizam os alvos. O firmware desabilita as saídas após 500 ms sem comando válido, inclusive se o Python travar. Reconexão, reset e perda prolongada exigem nova ativação; falhas de protocolo ou timeout encerram a aplicação com uma mensagem. Reinicie-a depois de resolver a causa.
