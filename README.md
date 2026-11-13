@@ -10,13 +10,15 @@ Execute os comandos no PowerShell, dentro de `C:\ProjetosPython\MaoRobotica`:
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[vision]"
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe scripts/download_model.py
 ```
 
+O `requirements.txt` instala todas as bibliotecas nas versões testadas e o próprio projeto. O modelo (`models/hand_landmarker.task`) não fica no Git: baixe-o com o script acima ou copie a pasta `models` de outro computador.
+
 Python 3.11 ou superior. A instalação com visão exige que MediaPipe, OpenCV e NumPy tenham pacotes disponíveis para sua plataforma. As versões efetivamente verificadas neste ambiente ficam em `requirements-tested.txt` após a validação. Não é necessário ativar o ambiente virtual nem mudar a política de execução do PowerShell.
 
-Para reproduzir as versões verificadas no Windows com Python 3.14, instale primeiro `python -m pip install -r requirements-tested.txt` dentro do ambiente virtual, depois `python -m pip install -e ".[vision]"`. Consulte [o registro de validação](docs/VALIDACAO.md) para o que foi testado e o que depende do hardware.
+As versões fixadas foram verificadas no Windows com Python 3.14. Em outra versão do Python, se alguma não tiver pacote disponível, use `python -m pip install -e ".[vision]"` para deixar o pip escolher versões compatíveis. Consulte [o registro de validação](docs/VALIDACAO.md) para o que foi testado e o que depende do hardware.
 
 Teste primeiro sem câmera e sem Arduino:
 

@@ -1,0 +1,7 @@
+# Instala todas as bibliotecas e o próprio projeto (com câmera/MediaPipe).
+# Execute na pasta do projeto, dentro do ambiente virtual:
+#   python -m pip install -r requirements.txt
+#
+# Versões fixadas e testadas no Windows com Python 3.14.
+-r requirements-tested.txt
+-e .[vision]
