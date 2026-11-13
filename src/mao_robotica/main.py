@@ -105,10 +105,8 @@ def run_camera(args):
             now = time.monotonic()
             if not ok:
                 raise RuntimeError("Falha na leitura da webcam")
-            # O MediaPipe classifica esquerda/direita supondo imagem espelhada (selfie).
-            # Espelhar antes da inferência faz "Right" corresponder à mão direita da pessoa.
-            # As flexões usam só ângulos e distâncias, então não mudam com o espelhamento.
-            frame = cv2.flip(frame, 1)
+            # Inferência na imagem original. Espelhamento somente na visualização.
+            # Testado com webcam: espelhar antes da inferência troca esquerda/direita.
             detection = tracker.detect(frame, now)
             raw = None
             if detection:
@@ -137,7 +135,7 @@ def run_camera(args):
                 if detection and client.armed and now >= next_send:
                     client.send(values)
                     next_send = now + 1 / config["send_hz"]
-            display = fit_to_window(frame, WINDOW)
+            display = fit_to_window(cv2.flip(frame, 1), WINDOW)
             # Texto desenhado após a ampliação, com escala proporcional, para ficar nítido.
             s = max(1.0, display.shape[0] / 480)
             thick = max(1, round(s))

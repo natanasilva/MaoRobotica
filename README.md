@@ -30,7 +30,7 @@ Para abrir a webcam em **simulação**, sem enviar comandos:
 .\.venv\Scripts\python.exe -m mao_robotica camera
 ```
 
-Em `config/hand.json`, `camera` é o índice da câmera e `hand` é `Right` ou `Left`, relativo à pessoa. A imagem é espelhada antes da inferência, como o MediaPipe espera para classificar esquerda/direita; a tela mostra a mesma imagem espelhada. Drivers que já espelham a captura podem exigir trocar a seleção. O programa aceita somente uma mão visível e rejeita a cena se encontrar duas.
+Em `config/hand.json`, `camera` é o índice da câmera e `hand` é `Right` ou `Left`, relativo à pessoa. A inferência recebe a imagem original; só a visualização é espelhada. Drivers que já espelham a captura podem exigir trocar a seleção. O programa aceita somente uma mão visível e rejeita a cena se encontrar duas.
 
 ## Calibrar a leitura da mão
 
