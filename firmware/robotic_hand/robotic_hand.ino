@@ -38,8 +38,8 @@ bool writePulse(uint8_t channel, uint16_t micros) {
 
 bool configurationValid() {
   for (uint8_t i = 0; i < 5; ++i) {
-    if (CHANNELS[i] > 15 || OPEN_US[i] < 500 || OPEN_US[i] > 2500 ||
-        CLOSED_US[i] < 500 || CLOSED_US[i] > 2500) return false;
+    if (CHANNELS[i] > 15 || OPEN_US[i] < PULSE_MIN_US || OPEN_US[i] > PULSE_MAX_US ||
+        CLOSED_US[i] < PULSE_MIN_US || CLOSED_US[i] > PULSE_MAX_US) return false;
     for (uint8_t j = 0; j < i; ++j) if (CHANNELS[i] == CHANNELS[j]) return false;
   }
   return true;
