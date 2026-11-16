@@ -2,7 +2,7 @@
 #include <Arduino.h>
 
 // Ajuste com os cabos dos dedos desacoplados. Só depois altere para true.
-constexpr bool CALIBRATED = false;
+constexpr bool CALIBRATED = true;
 constexpr uint8_t PCA_ADDRESS = 0x40;
 constexpr uint8_t OE_PIN = 7;  // OE com pull-up externo de 1k para VCC (ver README).
 constexpr uint16_t PWM_HZ = 50;
