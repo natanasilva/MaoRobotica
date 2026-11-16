@@ -18,7 +18,7 @@ const char *const NOMES[5] = {"polegar", "indicador", "medio", "anelar", "minimo
 // Qual dedo usa o servo de 360 graus (0 = polegar ... 4 = minimo; -1 = nenhum).
 // Num servo de 360 graus (rotação contínua) o pulso controla VELOCIDADE e
 // sentido, não posição: 1500 us = parado, abaixo gira para um lado, acima para o outro.
-const int8_t DEDO_360 = 0;
+const int8_t DEDO_360 = 4;
 
 // Faixa usada para converter pulso <-> graus nos servos de 180 graus.
 // Muitos servos (MG996R, MG90S, SG90) ficam perto de 500..2500 us, mas confira o seu.
