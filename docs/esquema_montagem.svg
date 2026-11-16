@@ -1,0 +1,275 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1660" height="1110" viewBox="0 0 1660 1110" font-family="Segoe UI, Arial, sans-serif">
+<rect width="1660" height="1110" fill="#f6f5f1"/>
+<text x="40" y="52" font-size="28" font-weight="700" fill="#1f2328" text-anchor="start">Mão robótica — esquema de montagem elétrica</text>
+<text x="40" y="80" font-size="15" font-weight="400" fill="#5b6168" text-anchor="start">Arduino Uno R3 (5 V) + driver PCA9685 (endereço 0x40) + 5 servos posicionais + fonte externa para os servos</text>
+<rect x="50" y="120" width="230" height="140" rx="10" fill="#e6e8eb" stroke="#9aa1a9" stroke-width="2"/>
+<rect x="64" y="134" width="202" height="100" rx="4" fill="#20262d"/>
+<text x="165" y="178" font-size="16" font-weight="700" fill="#ffffff" text-anchor="middle">Computador</text>
+<text x="165" y="200" font-size="13" font-weight="400" fill="#c9d1d9" text-anchor="middle">Python + webcam</text>
+<text x="165" y="220" font-size="12" font-weight="400" fill="#c9d1d9" text-anchor="middle">(MediaPipe → serial 115200)</text>
+<text x="165" y="252" font-size="12" font-weight="400" fill="#5b6168" text-anchor="middle">porta USB</text>
+<path d="M110,260 L110,300 L130,300 L130,345" fill="none" stroke="#55595e" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="142" y="316" font-size="13" font-weight="400" fill="#5b6168" text-anchor="start">cabo USB (dados + alimentação do Arduino)</text>
+<rect x="60" y="360" width="380" height="285" rx="14" fill="#0b7d8c" stroke="#065561" stroke-width="3"/>
+<rect x="112" y="340" width="38" height="34" rx="3" fill="#b9bec4" stroke="#6d737a" stroke-width="2"/>
+<text x="131" y="393" font-size="11" font-weight="700" fill="#e9fbff" text-anchor="middle">USB</text>
+<rect x="150" y="470" width="150" height="56" rx="4" fill="#1d2329"/>
+<text x="225" y="503" font-size="13" font-weight="600" fill="#cfd6dd" text-anchor="middle">ATmega328P</text>
+<text x="90" y="600" font-size="22" font-weight="700" fill="#ffffff" text-anchor="start">Arduino Uno R3</text>
+<text x="90" y="624" font-size="13" font-weight="400" fill="#d5f3f7" text-anchor="start">(ou Nano clássico 5 V)</text>
+<rect x="424" y="392" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="416" y="405" font-size="14" font-weight="700" fill="#ffffff" text-anchor="end">GND</text>
+<rect x="424" y="427" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="416" y="440" font-size="14" font-weight="700" fill="#ffffff" text-anchor="end">D7</text>
+<rect x="424" y="462" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="416" y="475" font-size="14" font-weight="700" fill="#ffffff" text-anchor="end">A5 / SCL</text>
+<rect x="424" y="497" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="416" y="510" font-size="14" font-weight="700" fill="#ffffff" text-anchor="end">A4 / SDA</text>
+<rect x="424" y="532" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="416" y="545" font-size="14" font-weight="700" fill="#ffffff" text-anchor="end">5V</text>
+<rect x="660" y="360" width="420" height="250" rx="10" fill="#26408b" stroke="#17295e" stroke-width="3"/>
+<rect x="830" y="420" width="90" height="60" rx="4" fill="#1a1d22"/>
+<text x="875" y="455" font-size="13" font-weight="600" fill="#cfd6dd" text-anchor="middle">PCA9685</text>
+<text x="950" y="405" font-size="17" font-weight="700" fill="#ffffff" text-anchor="start">Driver PWM</text>
+<text x="950" y="425" font-size="13" font-weight="400" fill="#cfdaf7" text-anchor="start">16 canais</text>
+<text x="950" y="445" font-size="13" font-weight="400" fill="#cfdaf7" text-anchor="start">I²C 0x40</text>
+<rect x="660" y="392" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="684" y="405" font-size="14" font-weight="700" fill="#ffffff" text-anchor="start">GND</text>
+<rect x="660" y="427" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="684" y="440" font-size="14" font-weight="700" fill="#ffffff" text-anchor="start">OE</text>
+<rect x="660" y="462" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="684" y="475" font-size="14" font-weight="700" fill="#ffffff" text-anchor="start">SCL</text>
+<rect x="660" y="497" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="684" y="510" font-size="14" font-weight="700" fill="#ffffff" text-anchor="start">SDA</text>
+<rect x="660" y="532" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="684" y="545" font-size="14" font-weight="700" fill="#ffffff" text-anchor="start">VCC</text>
+<rect x="660" y="567" width="16" height="16" fill="#111" stroke="#c7a64a" stroke-width="2"/>
+<text x="684" y="580" font-size="14" font-weight="700" fill="#ffffff" text-anchor="start">V+</text>
+<text x="706" y="580" font-size="10" font-weight="400" fill="#cfdaf7" text-anchor="start" font-style="italic">(não usar)</text>
+<rect x="765" y="326" width="110" height="38" rx="3" fill="#2f8be0" stroke="#145a9c" stroke-width="2"/>
+<circle cx="792" cy="345" r="10" fill="#d9dde2" stroke="#555" stroke-width="2"/>
+<line x1="786" y1="345" x2="798" y2="345" stroke="#555" stroke-width="2"/>
+<circle cx="848" cy="345" r="10" fill="#d9dde2" stroke="#555" stroke-width="2"/>
+<line x1="842" y1="345" x2="854" y2="345" stroke="#555" stroke-width="2"/>
+<text x="820" y="383" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">V+   GND</text>
+<text x="885" y="350" font-size="12" font-weight="400" fill="#5b6168" text-anchor="start">borne de força dos servos</text>
+<text x="781" y="563" font-size="9" font-weight="700" fill="#cfdaf7" text-anchor="end">PWM</text>
+<text x="781" y="577" font-size="9" font-weight="700" fill="#cfdaf7" text-anchor="end">V+</text>
+<text x="781" y="591" font-size="9" font-weight="700" fill="#cfdaf7" text-anchor="end">GND</text>
+<rect x="785" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="785" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="785" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="790" y="548" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">0</text>
+<rect x="803" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="803" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="803" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="808" y="548" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+<rect x="821" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="821" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="821" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="826" y="548" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+<rect x="839" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="839" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="839" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="844" y="548" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+<rect x="857" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="857" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="857" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="862" y="548" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+<rect x="875" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="875" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="875" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="880" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">5</text>
+<rect x="893" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="893" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="893" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="898" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">6</text>
+<rect x="911" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="911" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="911" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="916" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">7</text>
+<rect x="929" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="929" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="929" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="934" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">8</text>
+<rect x="947" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="947" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="947" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="952" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">9</text>
+<rect x="965" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="965" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="965" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="970" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">10</text>
+<rect x="983" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="983" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="983" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="988" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">11</text>
+<rect x="1001" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="1001" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="1001" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="1006" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">12</text>
+<rect x="1019" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="1019" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="1019" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="1024" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">13</text>
+<rect x="1037" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="1037" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="1037" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="1042" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">14</text>
+<rect x="1055" y="555" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="1055" y="569" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<rect x="1055" y="583" width="10" height="10" fill="#111" stroke="#c7a64a" stroke-width="1.2"/>
+<text x="1060" y="548" font-size="10" font-weight="700" fill="#9fb0de" text-anchor="middle">15</text>
+<text x="782" y="548" font-size="9" font-weight="400" fill="#cfdaf7" text-anchor="end">canal</text>
+<path d="M440,400 L660,400" fill="none" stroke="#222222" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="470" y="393" font-size="12" font-weight="600" fill="#222222" text-anchor="start">GND → GND</text>
+<path d="M440,435 L660,435" fill="none" stroke="#8e44ad" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="470" y="428" font-size="12" font-weight="600" fill="#8e44ad" text-anchor="start">D7 → OE</text>
+<path d="M440,470 L660,470" fill="none" stroke="#2e9e44" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="470" y="463" font-size="12" font-weight="600" fill="#2e9e44" text-anchor="start">A5 → SCL</text>
+<path d="M440,505 L660,505" fill="none" stroke="#1e78d6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="470" y="498" font-size="12" font-weight="600" fill="#1e78d6" text-anchor="start">A4 → SDA</text>
+<path d="M440,540 L660,540" fill="none" stroke="#e8a100" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="470" y="533" font-size="12" font-weight="600" fill="#a87400" text-anchor="start">5V → VCC (lógica)</text>
+<path d="M612,435 L612,452" fill="none" stroke="#555" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M612,523 L612,540" fill="none" stroke="#555" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="597" y="447" width="30" height="80" fill="#f6f5f1"/>
+<rect x="603" y="452" width="18" height="71" rx="7" fill="#e8d2a6" stroke="#8a6d3b" stroke-width="2"/>
+<rect x="603" y="462" width="18" height="5" fill="#6b3e26"/>
+<rect x="603" y="472" width="18" height="5" fill="#111"/>
+<rect x="603" y="482" width="18" height="5" fill="#d62828"/>
+<rect x="603" y="510" width="18" height="5" fill="#c9a227"/>
+<circle cx="612" cy="435" r="6" fill="#8e44ad" stroke="#fff" stroke-width="1.5"/>
+<circle cx="612" cy="540" r="6" fill="#e8a100" stroke="#fff" stroke-width="1.5"/>
+<text x="628" y="492" font-size="13" font-weight="700" fill="#6b4f1d" text-anchor="start">1 kΩ</text>
+<text x="606" y="625" font-size="11" font-weight="400" fill="#5b6168" text-anchor="middle">pull-up de OE: mantém os servos</text>
+<text x="606" y="639" font-size="11" font-weight="400" fill="#5b6168" text-anchor="middle">desligados durante o reset</text>
+<rect x="1180" y="110" width="290" height="110" rx="8" fill="#5a6068" stroke="#33383e" stroke-width="2"/>
+<rect x="1196" y="124" width="6" height="40" rx="2" fill="#474c53"/>
+<rect x="1208" y="124" width="6" height="40" rx="2" fill="#474c53"/>
+<rect x="1220" y="124" width="6" height="40" rx="2" fill="#474c53"/>
+<rect x="1232" y="124" width="6" height="40" rx="2" fill="#474c53"/>
+<rect x="1244" y="124" width="6" height="40" rx="2" fill="#474c53"/>
+<rect x="1256" y="124" width="6" height="40" rx="2" fill="#474c53"/>
+<rect x="1268" y="124" width="6" height="40" rx="2" fill="#474c53"/>
+<rect x="1280" y="124" width="6" height="40" rx="2" fill="#474c53"/>
+<text x="1300" y="145" font-size="17" font-weight="700" fill="#ffffff" text-anchor="start">Fonte externa</text>
+<text x="1300" y="166" font-size="13" font-weight="400" fill="#e3e6ea" text-anchor="start">5–6 V (conforme servo)</text>
+<text x="1300" y="184" font-size="12" font-weight="400" fill="#e3e6ea" text-anchor="start">≥ 5 A p/ 5 servos MG996R</text>
+<circle cx="1250" cy="208" r="9" fill="#d62828" stroke="#fff" stroke-width="1.5"/>
+<text x="1250" y="213" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">+</text>
+<circle cx="1390" cy="208" r="9" fill="#222" stroke="#fff" stroke-width="1.5"/>
+<text x="1390" y="213" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">−</text>
+<path d="M1250,217 L1250,250 L1160,250" fill="none" stroke="#d62828" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M1090,250 L792,250 L792,335" fill="none" stroke="#d62828" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1160" cy="250" r="6" fill="#d62828" stroke="#fff" stroke-width="1.5"/>
+<circle cx="1090" cy="250" r="6" fill="#d62828" stroke="#fff" stroke-width="1.5"/>
+<line x1="1090" y1="250" x2="1152" y2="226" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+<text x="1125" y="214" font-size="12" font-weight="700" fill="#1f2328" text-anchor="middle">chave ON/OFF</text>
+<text x="1125" y="274" font-size="11" font-weight="400" fill="#5b6168" text-anchor="middle">(corte físico dos servos)</text>
+<path d="M1390,217 L1390,300 L848,300 L848,335" fill="none" stroke="#222222" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M985,250 L985,262" fill="none" stroke="#d62828" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M985,288 L985,300" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="976" y="262" width="18" height="26" rx="3" fill="#20304f" stroke="#111" stroke-width="1.5"/>
+<rect x="988" y="262" width="5" height="26" fill="#c9ced6"/>
+<circle cx="985" cy="250" r="6" fill="#d62828" stroke="#fff" stroke-width="1.5"/>
+<circle cx="985" cy="300" r="6" fill="#222222" stroke="#fff" stroke-width="1.5"/>
+<text x="969" y="282" font-size="11" font-weight="700" fill="#1f2328" text-anchor="end">470–1000 µF</text>
+<text x="969" y="296" font-size="10" font-weight="400" fill="#5b6168" text-anchor="end">(recomendado)</text>
+<text x="700" y="243" font-size="13" font-weight="700" fill="#d62828" text-anchor="start">V+ servos</text>
+<text x="700" y="318" font-size="13" font-weight="700" fill="#222222" text-anchor="start">GND servos</text>
+<rect x="782" y="552" width="16" height="46" rx="2" fill="#111" opacity="0.9"/>
+<path d="M785,598 L785,667 L145,667 L145,800" fill="none" stroke="#ff8c00" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M790,598 L790,672 L150,672 L150,800" fill="none" stroke="#d62828" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M795,598 L795,677 L155,677 L155,800" fill="none" stroke="#6b3e26" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="80" y="800" width="140" height="78" rx="6" fill="#1e5aa8" stroke="#123a70" stroke-width="2"/>
+<rect x="66" y="822" width="168" height="12" rx="3" fill="#1e5aa8" stroke="#123a70" stroke-width="2"/>
+<circle cx="180" cy="852" r="16" fill="#e6e8eb" stroke="#555" stroke-width="2"/>
+<rect x="176" y="818" width="8" height="52" rx="4" fill="#f4f4f4" stroke="#555" stroke-width="1.5"/>
+<text x="120" y="862" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">SERVO</text>
+<text x="150" y="902" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">Canal 0 — Polegar</text>
+<rect x="800" y="552" width="16" height="46" rx="2" fill="#111" opacity="0.9"/>
+<path d="M803,598 L803,695 L365,695 L365,800" fill="none" stroke="#ff8c00" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M808,598 L808,700 L370,700 L370,800" fill="none" stroke="#d62828" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M813,598 L813,705 L375,705 L375,800" fill="none" stroke="#6b3e26" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="300" y="800" width="140" height="78" rx="6" fill="#1e5aa8" stroke="#123a70" stroke-width="2"/>
+<rect x="286" y="822" width="168" height="12" rx="3" fill="#1e5aa8" stroke="#123a70" stroke-width="2"/>
+<circle cx="400" cy="852" r="16" fill="#e6e8eb" stroke="#555" stroke-width="2"/>
+<rect x="396" y="818" width="8" height="52" rx="4" fill="#f4f4f4" stroke="#555" stroke-width="1.5"/>
+<text x="340" y="862" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">SERVO</text>
+<text x="370" y="902" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">Canal 1 — Indicador</text>
+<rect x="818" y="552" width="16" height="46" rx="2" fill="#111" opacity="0.9"/>
+<path d="M821,598 L821,723 L585,723 L585,800" fill="none" stroke="#ff8c00" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M826,598 L826,728 L590,728 L590,800" fill="none" stroke="#d62828" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M831,598 L831,733 L595,733 L595,800" fill="none" stroke="#6b3e26" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="520" y="800" width="140" height="78" rx="6" fill="#1e5aa8" stroke="#123a70" stroke-width="2"/>
+<rect x="506" y="822" width="168" height="12" rx="3" fill="#1e5aa8" stroke="#123a70" stroke-width="2"/>
+<circle cx="620" cy="852" r="16" fill="#e6e8eb" stroke="#555" stroke-width="2"/>
+<rect x="616" y="818" width="8" height="52" rx="4" fill="#f4f4f4" stroke="#555" stroke-width="1.5"/>
+<text x="560" y="862" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">SERVO</text>
+<text x="590" y="902" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">Canal 2 — Médio</text>
+<rect x="836" y="552" width="16" height="46" rx="2" fill="#111" opacity="0.9"/>
+<path d="M839,598 L839,705 L900,705 L900,800" fill="none" stroke="#ff8c00" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M844,598 L844,700 L905,700 L905,800" fill="none" stroke="#d62828" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M849,598 L849,695 L910,695 L910,800" fill="none" stroke="#6b3e26" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="835" y="800" width="140" height="78" rx="6" fill="#1e5aa8" stroke="#123a70" stroke-width="2"/>
+<rect x="821" y="822" width="168" height="12" rx="3" fill="#1e5aa8" stroke="#123a70" stroke-width="2"/>
+<circle cx="935" cy="852" r="16" fill="#e6e8eb" stroke="#555" stroke-width="2"/>
+<rect x="931" y="818" width="8" height="52" rx="4" fill="#f4f4f4" stroke="#555" stroke-width="1.5"/>
+<text x="875" y="862" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">SERVO</text>
+<text x="905" y="902" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">Canal 3 — Anelar</text>
+<rect x="854" y="552" width="16" height="46" rx="2" fill="#111" opacity="0.9"/>
+<path d="M857,598 L857,677 L1105,677 L1105,800" fill="none" stroke="#ff8c00" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M862,598 L862,672 L1110,672 L1110,800" fill="none" stroke="#d62828" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M867,598 L867,667 L1115,667 L1115,800" fill="none" stroke="#6b3e26" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="1040" y="800" width="140" height="78" rx="6" fill="#1e5aa8" stroke="#123a70" stroke-width="2"/>
+<rect x="1026" y="822" width="168" height="12" rx="3" fill="#1e5aa8" stroke="#123a70" stroke-width="2"/>
+<circle cx="1140" cy="852" r="16" fill="#e6e8eb" stroke="#555" stroke-width="2"/>
+<rect x="1136" y="818" width="8" height="52" rx="4" fill="#f4f4f4" stroke="#555" stroke-width="1.5"/>
+<text x="1080" y="862" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">SERVO</text>
+<text x="1110" y="902" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">Canal 4 — Mínimo</text>
+<text x="150" y="925" font-size="11" font-weight="400" fill="#5b6168" text-anchor="middle">laranja = sinal · vermelho = V+ · marrom = GND</text>
+<rect x="1235" y="340" width="395" height="560" rx="10" fill="#ffffff" stroke="#d0d4d9" stroke-width="1.5"/>
+<text x="1255" y="374" font-size="18" font-weight="700" fill="#1f2328" text-anchor="start">Componentes necessários</text>
+<text x="1257" y="406" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">1×</text>
+<text x="1287" y="406" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">Arduino Uno R3 ou Nano clássico (5 V)</text>
+<text x="1257" y="432" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">1×</text>
+<text x="1287" y="432" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">Cabo USB para o Arduino</text>
+<text x="1257" y="458" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">1×</text>
+<text x="1287" y="458" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">Módulo PCA9685 16 canais (I²C, 0x40)</text>
+<text x="1257" y="484" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">5×</text>
+<text x="1287" y="484" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">Servos posicionais (ex.: MG996R / MG90S)</text>
+<text x="1257" y="510" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start"></text>
+<text x="1287" y="510" font-size="14" font-weight="400" fill="#5b6168" text-anchor="start">— não usar servos de rotação contínua</text>
+<text x="1257" y="536" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">1×</text>
+<text x="1287" y="536" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">Fonte 5–6 V, ≥ 5 A (dimensionar pelo pico)</text>
+<text x="1257" y="562" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">1×</text>
+<text x="1287" y="562" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">Resistor 1 kΩ (pull-up do OE)</text>
+<text x="1257" y="588" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">1×</text>
+<text x="1287" y="588" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">Chave liga/desliga para a fonte</text>
+<text x="1257" y="614" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">1×</text>
+<text x="1287" y="614" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">Capacitor eletrolítico 470–1000 µF,</text>
+<text x="1257" y="640" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start"></text>
+<text x="1287" y="640" font-size="14" font-weight="400" fill="#5b6168" text-anchor="start">≥ 10 V (recomendado, no borne)</text>
+<text x="1257" y="666" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">—</text>
+<text x="1287" y="666" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">Jumpers M-F / fios; fio grosso p/ V+ e GND</text>
+<text x="1255" y="706" font-size="16" font-weight="700" fill="#1f2328" text-anchor="start">Cores dos fios no esquema</text>
+<line x1="1259" y1="737" x2="1299" y2="737" stroke="#e8a100" stroke-width="5" stroke-linecap="round"/>
+<text x="1311" y="742" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">5 V lógico (Arduino → VCC)</text>
+<line x1="1259" y1="763" x2="1299" y2="763" stroke="#d62828" stroke-width="5" stroke-linecap="round"/>
+<text x="1311" y="768" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">V+ dos servos (fonte externa)</text>
+<line x1="1259" y1="789" x2="1299" y2="789" stroke="#222222" stroke-width="5" stroke-linecap="round"/>
+<text x="1311" y="794" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">GND comum</text>
+<line x1="1259" y1="815" x2="1299" y2="815" stroke="#1e78d6" stroke-width="5" stroke-linecap="round"/>
+<text x="1311" y="820" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">SDA (A4)</text>
+<line x1="1259" y1="841" x2="1299" y2="841" stroke="#2e9e44" stroke-width="5" stroke-linecap="round"/>
+<text x="1311" y="846" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">SCL (A5)</text>
+<line x1="1259" y1="867" x2="1299" y2="867" stroke="#8e44ad" stroke-width="5" stroke-linecap="round"/>
+<text x="1311" y="872" font-size="14" font-weight="400" fill="#1f2328" text-anchor="start">OE (D7)</text>
+<rect x="40" y="950" width="1590" height="135" rx="10" fill="#fff4e5" stroke="#f0b35a" stroke-width="1.5"/>
+<text x="60" y="980" font-size="17" font-weight="700" fill="#8a4b00" text-anchor="start">⚠ Atenção</text>
+<text x="60" y="1006" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="start">• NÃO alimente os servos pelo 5 V do Arduino: o V+ dos servos vem só da fonte externa. O 5 V do Arduino alimenta apenas a lógica (VCC) do PCA9685.</text>
+<text x="60" y="1027" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="start">• Todos os GND devem ser comuns: Arduino GND, GND do PCA9685 e negativo da fonte. Confira a ordem sinal / V+ / GND de cada conector antes de ligar.</text>
+<text x="60" y="1048" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="start">• Os pinos do Arduino foram agrupados para clareza: no Uno, A4/A5 e 5V/GND ficam na barra inferior e D7 na barra digital — guie-se pelas etiquetas da placa.</text>
+<text x="60" y="1069" font-size="13.5" font-weight="400" fill="#1f2328" text-anchor="start">• Meça OE em nível alto durante o reset (o pull-up de 1 kΩ deve vencer o pull-down do módulo). Desenergize antes de mudar ligações; teste um servo por vez.</text>
+</svg>
