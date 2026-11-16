@@ -88,6 +88,12 @@ Os valores de 1300–1700 µs incluídos são ilustrativos. Não representam lim
 3. Use o comando manual abaixo. Desenergize antes de mudar ligações. Amplie os extremos em pequenos passos, regravando o firmware, e encontre a faixa necessária sem atingir batentes.
 4. Repita por dedo, confira o sentido, acople a mecânica sem tensão excessiva e reduza os limites se necessário. Só então conecte os cinco servos e execute com visão.
 
+### Sketch de teste dos servos
+
+`firmware/teste_servos/teste_servos.ino` é um sketch separado para testar cada servo pelo Monitor Serial (115200 baud), sem Python nem webcam. Grave-o no lugar do firmware principal, digite `ajuda` e use `d <dedo>`, `g <graus>`, `p <us>`, `+`/`-`, `a`/`f` para marcar aberto/fechado, `v` para varrer e `l` para imprimir as linhas `OPEN_US`/`CLOSED_US` prontas para o `servo_config.h`. `x` desliga as saídas. Depois, regrave `robotic_hand.ino`.
+
+Servo de 360 graus (rotação contínua): o pulso define velocidade e sentido, não posição. Indique o dedo em `DEDO_360` no sketch e use `r <us> <ms>` para girá-lo por um tempo. O firmware principal não consegue posicionar esse servo.
+
 Sem sensores externos, o Arduino não conhece a posição real após ligar ou desabilitar os servos. **O primeiro pulso ao ativar pode reposicionar o eixo**, mesmo com a rampa aplicada aos comandos seguintes. Não há controle de força nem detecção de obstáculos.
 
 ## Operar com Arduino
