@@ -17,8 +17,7 @@ constexpr uint16_t PULSE_MAX_US = 2600;
 
 // Valores ilustrativos, NÃO são limites universais dos servos.
 constexpr uint8_t CHANNELS[5] = {0, 1, 2, 3, 4};
-// Dedos 0-3: servos de 180 graus, curso estendido (400 a 2600 us, além de 180 graus nominais).
-// Dedo 4 (mínimo): servo de 360 graus (rotação contínua). Pulso = velocidade,
-// por isso fica em 1500 us (parado) nos dois extremos.
-constexpr uint16_t OPEN_US[5] = {400, 400, 400, 400, 1500};
-constexpr uint16_t CLOSED_US[5] = {2600, 2600, 2600, 2600, 1500};
+// Os cinco dedos usam servos de 180 graus, curso estendido (400 a 2600 us,
+// além dos 180 graus nominais). Dedo invertido: troque os dois valores dele.
+constexpr uint16_t OPEN_US[5] = {400, 400, 400, 400, 400};
+constexpr uint16_t CLOSED_US[5] = {2600, 2600, 2600, 2600, 2600};

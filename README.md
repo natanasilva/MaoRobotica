@@ -94,7 +94,7 @@ As configurações ficam em `firmware/robotic_hand/servo_config.h`:
 - `MAX_STEP_US`: passo máximo a cada 20 ms. Com 20 µs (1000 µs/s), o curso completo leva cerca de 2,2 s; aumente para os dedos acompanharem a mão mais rápido.
 - `CALIBRATED`: `true` libera o `ARM`; com `false` o firmware recusa o acionamento.
 
-A configuração atual usa 400–2600 µs nos dedos 0–3; o mínimo (servo de 360°) fica em 1500 µs e não acompanha a visão. Se um dedo fechar quando deveria abrir, troque os dois valores dele. Se um servo forçar ou zumbir em um extremo (batente mecânico ou fim de curso), reduza aquele extremo em passos de 50 µs. Para comissionar:
+A configuração atual usa servos de 180° nos cinco dedos, com 400–2600 µs em todos. Se um dedo fechar quando deveria abrir, troque os dois valores dele. Se um servo forçar ou zumbir em um extremo (batente mecânico ou fim de curso), reduza aquele extremo em passos de 50 µs. Para comissionar:
 
 1. Desacople os cabos/elos e conecte inicialmente apenas um servo. Consulte os pulsos e a tensão especificados pelo fabricante.
 2. Configure inicialmente os dois extremos desse servo para um pulso central conhecido, e coloque `CALIBRATED = true` para o ensaio de bancada. Regrave o firmware.
@@ -105,7 +105,7 @@ A configuração atual usa 400–2600 µs nos dedos 0–3; o mínimo (servo de 3
 
 `firmware/teste_servos/teste_servos.ino` é um sketch separado para testar cada servo pelo Monitor Serial (115200 baud), sem Python nem webcam. Grave-o no lugar do firmware principal, digite `ajuda` e use `d <dedo>`, `g <graus>`, `p <us>`, `+`/`-`, `a`/`f` para marcar aberto/fechado, `v` para varrer e `l` para imprimir as linhas `OPEN_US`/`CLOSED_US` prontas para o `servo_config.h`. `x` desliga as saídas. Depois, regrave `robotic_hand.ino`.
 
-Servo de 360 graus (rotação contínua): o pulso define velocidade e sentido, não posição. Indique o dedo em `DEDO_360` no sketch e use `r <us> <ms>` para girá-lo por um tempo. O firmware principal não consegue posicionar esse servo.
+Servo de 360 graus (rotação contínua): o pulso define velocidade e sentido, não posição. A montagem atual não usa nenhum (`DEDO_360 = -1`). Se trocar algum dedo por um servo desse tipo, indique-o em `DEDO_360` e use `r <us> <ms>` para girá-lo por um tempo. O firmware principal não consegue posicionar esse servo.
 
 Sem sensores externos, o Arduino não conhece a posição real após ligar ou desabilitar os servos. **O primeiro pulso ao ativar pode reposicionar o eixo**, mesmo com a rampa aplicada aos comandos seguintes. Não há controle de força nem detecção de obstáculos.
 
