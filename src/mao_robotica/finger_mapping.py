@@ -40,3 +40,37 @@ def normalize(values, calibration):
     return [max(0.0, min(1.0, (v - calibration[f]["open"]) /
                             (calibration[f]["closed"] - calibration[f]["open"])))
             for f, v in zip(FINGERS, values)]
+
+
+def palm_facing(points):
+    """|cosseno| entre a normal da palma e o eixo da câmera (1 = palma de frente)."""
+    u = [a - b for a, b in zip(points[5], points[0])]
+    v = [a - b for a, b in zip(points[17], points[0])]
+    normal = (u[1]*v[2] - u[2]*v[1], u[2]*v[0] - u[0]*v[2], u[0]*v[1] - u[1]*v[0])
+    length = math.sqrt(sum(x*x for x in normal))
+    if length < 1e-10:
+        return 0.0
+    return abs(normal[2]) / length
+
+
+def is_open_palm(points, raw, max_bend=0.25, min_facing=0.6):
+    """Mão espalmada: quatro dedos estendidos, polegar afastado e palma voltada à câmera.
+
+    Usa apenas geometria, sem depender da calibração, para servir de referência de abertura.
+    """
+    if any(v > max_bend for v in raw[1:]) or raw[0] > max_bend + 0.1:
+        return False
+    for base in (5, 9, 13, 17):
+        # Ponta mais distante do punho que a articulação média: dedo esticado.
+        if distance(points[0], points[base+3]) < 1.15 * distance(points[0], points[base+1]):
+            return False
+    palm_width = distance(points[5], points[17])
+    if distance(points[4], points[17]) < 1.25 * palm_width:
+        return False
+    return palm_facing(points) >= min_facing
+
+
+def normalize_from_open(values, reference, calibration):
+    """Flexão relativa à mão aberta observada, usando a amplitude calibrada de cada dedo."""
+    return [max(0.0, min(1.0, (v - r) / (calibration[f]["closed"] - calibration[f]["open"])))
+            for f, v, r in zip(FINGERS, values, reference)]

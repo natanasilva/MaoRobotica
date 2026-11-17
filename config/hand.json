@@ -1,16 +1,19 @@
 {
   "camera": 0,
-  "hand": "Right",
+  "hand": "Any",
   "model": "models/hand_landmarker.task",
   "send_hz": 25,
   "smoothing_seconds": 0.10,
-  "lost_seconds": 0.25,
+  "lost_seconds": 0.4,
   "min_hand_score": 0.7,
+  "open_hold_seconds": 0.8,
+  "open_max_bend": 0.25,
+  "open_min_facing": 0.6,
   "calibration": {
-    "thumb": {"open": 0.0, "closed": 1.0},
-    "index": {"open": 0.0, "closed": 1.0},
-    "middle": {"open": 0.0, "closed": 1.0},
-    "ring": {"open": 0.0, "closed": 1.0},
-    "little": {"open": 0.0, "closed": 1.0}
+    "thumb": {"open": 0.12, "closed": 0.40},
+    "index": {"open": 0.12, "closed": 0.50},
+    "middle": {"open": 0.12, "closed": 0.50},
+    "ring": {"open": 0.12, "closed": 0.50},
+    "little": {"open": 0.10, "closed": 0.48}
   }
 }

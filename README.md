@@ -32,15 +32,28 @@ Para abrir a webcam em **simulação**, sem enviar comandos:
 .\.venv\Scripts\python.exe -m mao_robotica camera
 ```
 
-Em `config/hand.json`, `camera` é o índice da câmera e `hand` é `Right` ou `Left`, relativo à pessoa. A inferência recebe a imagem original; só a visualização é espelhada. Drivers que já espelham a captura podem exigir trocar a seleção. O programa aceita somente uma mão visível e rejeita a cena se encontrar duas.
+Em `config/hand.json`, `camera` é o índice da câmera e `hand` é `Any` (padrão: qualquer mão), `Right` ou `Left`, relativo à pessoa. A inferência recebe a imagem original; só a visualização é espelhada. Drivers que já espelham a captura podem exigir trocar a seleção. O programa aceita somente uma mão visível e rejeita a cena se encontrar duas.
 
-## Calibrar a leitura da mão
+## Controle automático pela mão espalmada
 
-1. Mantenha a mão aberta, de frente para a câmera, estável por pelo menos um segundo. Pressione **O**.
+O modo `camera` procura **continuamente** uma mão espalmada. Não é preciso apertar nenhuma tecla para começar:
+
+1. **PROCURANDO MÃO ABERTA**: mostre a mão aberta, dedos esticados, polegar afastado e palma de frente para a câmera. Uma barra amarela mostra o progresso enquanto a mão fica parada.
+2. Depois de `open_hold_seconds` (0,8 s) estável, essa postura vira a **referência de 0%** de cada dedo. Os servos são ativados e o estado muda para **CONTROLANDO**.
+3. Feche e abra os dedos: o fechamento de cada um é medido em relação à mão aberta capturada e enviado ao servo correspondente.
+4. Se a mão sumir por `lost_seconds` (0,4 s), ou o Arduino desarmar ou falhar, os servos são desligados e o sistema volta a procurar a mão aberta. Para retomar, basta mostrá-la de novo.
+
+A mão é considerada espalmada quando todos os dedos estão estendidos (`open_max_bend`), as pontas ficam mais distantes do punho que as articulações médias, o polegar está afastado da base do mínimo e a palma está voltada para a câmera (`open_min_facing`, 1 = totalmente de frente). Esse teste usa só a geometria dos 21 pontos e não depende da calibração.
+
+A referência de abertura é refeita a cada retomada, então posição e distância da câmera podem mudar entre sessões. A amplitude até o punho fechado vem de `calibration` (diferença `closed - open` de cada dedo). Os valores padrão são aproximados; para mais precisão, calibre a amplitude:
+
+## Calibrar a amplitude dos dedos (opcional)
+
+1. Mantenha a mão aberta, de frente para a câmera, estável por pelo menos um segundo. Pressione **O**. O controle é pausado.
 2. Feche os cinco dedos, incluindo o polegar sobre a palma, mantenha por um segundo e pressione **C**.
-3. Verifique se cada percentual varia aproximadamente entre 0 e 100% conforme move o dedo.
+3. Verifique se cada percentual varia aproximadamente entre 0 e 100% conforme move o dedo. Pressione **Espaço** para voltar ao controle automático.
 
-A calibração usa a mediana das amostras recentes, rejeita movimento excessivo e amplitudes insuficientes. Somente um par completo válido é salvo no JSON. As referências iniciais `0..1` são provisórias: calibre antes de controlar a mão física. É possível manter perfis separados:
+A calibração usa a mediana das amostras recentes, rejeita movimento excessivo e amplitudes insuficientes. Somente um par completo válido é salvo no JSON. É possível manter perfis separados:
 
 ```powershell
 Copy-Item config/hand.json config/minha-mao.local.json
@@ -78,10 +91,10 @@ As configurações ficam em `firmware/robotic_hand/servo_config.h`:
 - `CHANNELS`: canal de cada dedo, sem repetição.
 - `OPEN_US` e `CLOSED_US`: pulsos medidos para abertura e fechamento. A inversão é feita trocando os extremos.
 - `PWM_HZ`: 50 Hz inicialmente; confirme a frequência suportada pelos servos.
-- `MAX_STEP_US`: passo máximo a cada 20 ms, inicialmente 8 µs.
-- `CALIBRATED`: vem `false`, portanto o firmware recusa `ARM` até você configurar a montagem.
+- `MAX_STEP_US`: passo máximo a cada 20 ms. Com 20 µs (1000 µs/s), o curso completo leva cerca de 2,2 s; aumente para os dedos acompanharem a mão mais rápido.
+- `CALIBRATED`: `true` libera o `ARM`; com `false` o firmware recusa o acionamento.
 
-Os valores de 1300–1700 µs incluídos são ilustrativos. Não representam limites seguros universais. Para comissionar:
+A configuração atual usa 400–2600 µs nos dedos 0–3; o mínimo (servo de 360°) fica em 1500 µs e não acompanha a visão. Se um dedo fechar quando deveria abrir, troque os dois valores dele. Se um servo forçar ou zumbir em um extremo (batente mecânico ou fim de curso), reduza aquele extremo em passos de 50 µs. Para comissionar:
 
 1. Desacople os cabos/elos e conecte inicialmente apenas um servo. Consulte os pulsos e a tensão especificados pelo fabricante.
 2. Configure inicialmente os dois extremos desse servo para um pulso central conhecido, e coloque `CALIBRATED = true` para o ensaio de bancada. Regrave o firmware.
@@ -112,13 +125,14 @@ Na janela da câmera:
 
 | Tecla | Ação |
 |---|---|
-| A | Ativar, após pelo menos 0,5 s de detecção contínua |
-| Espaço | Desabilitar o acionamento |
-| O / C | Calibrar aberta / fechada; desarma o hardware |
+| — | Ativação automática ao detectar a mão espalmada e estável |
+| Espaço | Pausar (servos desligados, sem rearme automático) / retomar a busca |
+| R | Descartar a referência e procurar a mão aberta de novo |
+| O / C | Calibrar a amplitude: aberta / fechada; pausa o controle |
 | F | Alternar tela cheia / janela redimensionável (abre em tela cheia) |
 | Q / Esc | Encerrar e desabilitar o acionamento |
 
-A perda de mão por 250 ms desarma o controle; perdas menores não atualizam os alvos. O firmware desabilita as saídas após 500 ms sem comando válido, inclusive se o Python travar. Reconexão, reset e perda prolongada exigem nova ativação; falhas de protocolo ou timeout encerram a aplicação com uma mensagem. Reinicie-a depois de resolver a causa.
+A perda de mão por 400 ms desarma o controle; perdas menores não atualizam os alvos. O firmware desabilita as saídas após 500 ms sem comando válido, inclusive se o Python travar. Erros e timeouts informados pelo Arduino desarmam e voltam à busca da mão aberta, com 2 s de espera antes de reativar. A aplicação só termina com Q/Esc ou se a porta serial ou a webcam falharem.
 
 ## Protocolo e implementação
 
@@ -137,9 +151,10 @@ As mensagens são montadas em `protocol.py`. O firmware valida a linha inteira a
 
 ```text
 src/mao_robotica/
-  main.py            CLI, janela, calibração e ciclo de controle
+  main.py            CLI, janela, calibração e ciclo de controle automático
+  reference.py       Captura estável da referência de mão aberta
   tracking.py        MediaPipe Tasks e desenho dos pontos
-  finger_mapping.py  Ângulos 3D e normalização por dedo
+  finger_mapping.py  Ângulos 3D, detecção de mão espalmada e normalização
   filters.py         Suavização exponencial dependente do tempo
   serial_client.py   Conexão, ativação e confirmações
   protocol.py        Enquadramento, checksum e mensagens

@@ -30,7 +30,7 @@ class Tracker:
         if len(result.hand_landmarks) != 1:
             return None
         category = result.handedness[0][0]
-        if category.category_name != self.config["hand"] or category.score < self.config["min_hand_score"]:
+        if self.config["hand"] not in ("Any", category.category_name) or category.score < self.config["min_hand_score"]:
             return None
         points = [(p.x, p.y, p.z) for p in result.hand_world_landmarks[0]]
         return points, result.hand_landmarks[0]
