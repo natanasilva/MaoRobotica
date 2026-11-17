@@ -9,6 +9,7 @@ bool haveSequence = false;
 uint16_t lastSequence = 0;
 uint16_t currentUs[5];
 uint16_t targetUs[5];
+uint16_t contPos = 0, contTarget = 0;  // dedo contínuo: posição estimada 0..1000
 uint32_t lastCommand = 0;
 uint32_t lastStep = 0;
 char input[96];
@@ -29,6 +30,7 @@ void disableOutputs() {
   armed = false;
   haveSequence = false;
   for (uint8_t i = 0; i < 5; ++i) targetUs[i] = currentUs[i];
+  contTarget = contPos;
 }
 
 bool writePulse(uint8_t channel, uint16_t micros) {
@@ -42,7 +44,24 @@ bool configurationValid() {
         CLOSED_US[i] < PULSE_MIN_US || CLOSED_US[i] > PULSE_MAX_US) return false;
     for (uint8_t j = 0; j < i; ++j) if (CHANNELS[i] == CHANNELS[j]) return false;
   }
+  if (CONTINUOUS_FINGER > 4 || CONT_TRAVEL_MS == 0) return false;
+  int32_t fast = int32_t(CONT_NEUTRAL_US) + abs(CONT_SPEED_US);
+  int32_t slow = int32_t(CONT_NEUTRAL_US) - abs(CONT_SPEED_US);
+  if (slow < PULSE_MIN_US || fast > PULSE_MAX_US) return false;
   return true;
+}
+
+bool isContinuous(uint8_t i) { return int8_t(i) == CONTINUOUS_FINGER; }
+
+// Sem sensor: avança a posição estimada pelo tempo girando (malha aberta,
+// acumula erro). Gira até chegar ao alvo e para no pulso neutro.
+uint16_t continuousStep() {
+  uint16_t step = 1000UL * STEP_INTERVAL_MS / CONT_TRAVEL_MS;
+  if (step == 0) step = 1;
+  int32_t diff = int32_t(contTarget) - contPos;
+  if (diff >= int32_t(step)) { contPos += step; return CONT_NEUTRAL_US + CONT_SPEED_US; }
+  if (diff <= -int32_t(step)) { contPos -= step; return CONT_NEUTRAL_US - CONT_SPEED_US; }
+  return CONT_NEUTRAL_US;
 }
 
 int hexDigit(char c) {
@@ -90,7 +109,8 @@ void processLine(char *line) {
     if (!armed) {
       // Sem feedback de posição: o primeiro pulso pode reposicionar o eixo.
       for (uint8_t i = 0; i < 5; ++i) {
-        if (!writePulse(CHANNELS[i], currentUs[i])) {
+        uint16_t pulse = isContinuous(i) ? CONT_NEUTRAL_US : currentUs[i];
+        if (!writePulse(CHANNELS[i], pulse)) {
           disableOutputs(); reply("FAULT,I2C"); return;
         }
       }
@@ -124,6 +144,7 @@ void processLine(char *line) {
   if (haveSequence && (delta == 0 || delta >= 32768)) { reply("ERR,SEQUENCE"); return; }
   for (uint8_t i = 0; i < 5; ++i) {
     targetUs[i] = OPEN_US[i] + (int32_t(CLOSED_US[i]) - OPEN_US[i]) * values[i] / 1000;
+    if (isContinuous(i)) contTarget = values[i];
   }
   lastSequence = sequence;
   haveSequence = true;
@@ -175,11 +196,17 @@ void loop() {
   if (armed && uint32_t(now - lastStep) >= STEP_INTERVAL_MS) {
     lastStep = now;
     for (uint8_t i = 0; i < 5; ++i) {
-      int32_t difference = int32_t(targetUs[i]) - currentUs[i];
-      if (difference > MAX_STEP_US) difference = MAX_STEP_US;
-      if (difference < -int32_t(MAX_STEP_US)) difference = -int32_t(MAX_STEP_US);
-      currentUs[i] += difference;
-      if (!writePulse(CHANNELS[i], currentUs[i])) {
+      uint16_t pulse;
+      if (isContinuous(i)) {
+        pulse = continuousStep();
+      } else {
+        int32_t difference = int32_t(targetUs[i]) - currentUs[i];
+        if (difference > MAX_STEP_US) difference = MAX_STEP_US;
+        if (difference < -int32_t(MAX_STEP_US)) difference = -int32_t(MAX_STEP_US);
+        currentUs[i] += difference;
+        pulse = currentUs[i];
+      }
+      if (!writePulse(CHANNELS[i], pulse)) {
         disableOutputs(); reply("FAULT,I2C"); break;
       }
     }
