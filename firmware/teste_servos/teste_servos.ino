@@ -43,6 +43,12 @@ int16_t abertoUs[5], fechadoUs[5]; // -1 = ainda não marcado
 uint32_t ultimoPasso = 0;
 uint32_t pararGiroEm = 0;          // para o servo 360 após "gira"
 uint8_t dedoGiro = 0;              // dedo que está girando com "r"
+// Ida e volta (comando t): fecha por tMs, pausa, abre por tMs, pausa, repete.
+uint8_t ciclosRestantes = 0;
+uint8_t faseIdaVolta = 0;          // 0 fechando, 1 pausa, 2 abrindo, 3 pausa
+uint16_t usFechar = 0, usAbrir = 0;
+uint32_t tMs = 0, fimFase = 0;
+const uint32_t PAUSA_IDA_VOLTA_MS = 600;
 bool varrendo = false;
 bool varrendoParaFechado = true;
 char linha[48];
@@ -70,6 +76,7 @@ void desligaTudo() {
   varrendo = false;
   for (uint8_t i = 0; i < 5; ++i) iniciado[i] = false;
   pararGiroEm = 0;
+  ciclosRestantes = 0;
   Serial.println(F("Saidas DESLIGADAS."));
 }
 
@@ -150,6 +157,9 @@ void ajuda() {
     "  f             marca a posicao atual como FECHADO deste dedo\n"
     "  v             varre devagar entre aberto e fechado (qualquer comando para)\n"
     "  r <us> <ms>   (servo 360) gira com pulso <us> por <ms> e para, ex: r 1700 500\n"
+    "  t <us_fechar> <us_abrir> <ms> [ciclos]\n"
+    "                (servo 360) fecha e abre pelo MESMO tempo, ex: t 1700 1300 500 5\n"
+    "                se o dedo nao volta ao ponto inicial, ajuste <us_abrir>\n"
     "  l             mostra estado e imprime OPEN_US / CLOSED_US\n"
     "  x             DESLIGA todas as saidas\n"
     "  ajuda         esta lista"));
@@ -159,8 +169,16 @@ void processa(char *cmd) {
   char *op = strtok(cmd, " ");
   char *a1 = strtok(nullptr, " ");
   char *a2 = strtok(nullptr, " ");
+  char *a3 = strtok(nullptr, " ");
+  char *a4 = strtok(nullptr, " ");
   if (!op) return;
   varrendo = false;
+  if (ciclosRestantes) {
+    ciclosRestantes = 0;
+    alvoUs[dedo] = atualUs[dedo] = NEUTRO_360;
+    escrevePulso(dedo, NEUTRO_360);
+    Serial.println(F("Ida e volta interrompida."));
+  }
 
   if (!strcmp(op, "ajuda") || !strcmp(op, "?")) ajuda();
   else if (!strcmp(op, "x")) desligaTudo();
@@ -203,6 +221,24 @@ void processa(char *cmd) {
     if (!eh360(dedo)) { Serial.println(F("'r' e para o servo 360.")); return; }
     defineAlvo(atoi(a1));
     if (ativo && alvoUs[dedo] == uint16_t(atoi(a1))) { dedoGiro = dedo; pararGiroEm = millis() + atol(a2); }
+  }
+  else if (!strcmp(op, "t") && a1 && a2 && a3) {
+    if (!eh360(dedo)) { Serial.println(F("'t' e para o servo 360.")); return; }
+    int f = atoi(a1), a = atoi(a2);
+    long ms = atol(a3), n = a4 ? atol(a4) : 1;
+    if (f < PULSO_MIN || f > PULSO_MAX || a < PULSO_MIN || a > PULSO_MAX ||
+        ms <= 0 || ms > 10000 || n < 1 || n > 50) {
+      Serial.println(F("Uso: t <us_fechar> <us_abrir> <ms 1-10000> [ciclos 1-50]"));
+      return;
+    }
+    liga();
+    usFechar = f; usAbrir = a; tMs = ms; ciclosRestantes = n;
+    pararGiroEm = 0;
+    faseIdaVolta = 0;
+    alvoUs[dedo] = atualUs[dedo] = usFechar;
+    escrevePulso(dedo, usFechar);
+    fimFase = millis() + tMs;
+    Serial.println(F("Ida e volta... marque a posicao inicial do dedo e compare no fim."));
   }
   else if (!strcmp(op, "l")) { mostraEstado(); imprimeConfig(); }
   else Serial.println(F("Comando desconhecido. Digite 'ajuda'."));
@@ -247,6 +283,18 @@ void loop() {
     alvoUs[d] = atualUs[d] = NEUTRO_360;
     escrevePulso(d, NEUTRO_360);
     Serial.println(F("Servo 360 parado."));
+  }
+
+  if (ciclosRestantes && int32_t(agora - fimFase) >= 0) {
+    faseIdaVolta = (faseIdaVolta + 1) % 4;
+    if (faseIdaVolta == 0 && --ciclosRestantes == 0) {
+      Serial.println(F("Ida e volta concluida. O dedo voltou ao ponto inicial?"));
+    } else {
+      uint16_t us = faseIdaVolta == 0 ? usFechar : (faseIdaVolta == 2 ? usAbrir : NEUTRO_360);
+      alvoUs[dedo] = atualUs[dedo] = us;
+      escrevePulso(dedo, us);
+      fimFase = agora + ((faseIdaVolta & 1) ? PAUSA_IDA_VOLTA_MS : tMs);
+    }
   }
 
   if (!ativo || agora - ultimoPasso < INTERVALO_MS) return;

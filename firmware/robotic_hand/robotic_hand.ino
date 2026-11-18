@@ -4,8 +4,12 @@
 
 // Firmware para cinco servos de 360 graus (rotação contínua).
 // O pulso controla velocidade/sentido, então a posição de cada dedo é estimada
-// pelo tempo de giro (0 = aberto, FULL = fechado). Os servos ficam parados até
-// o alvo recebido (SET) se afastar da posição estimada mais que DEADBAND.
+// pelo tempo de giro (0 = aberto, FULL = fechado). Cada giro tem duração calculada
+// a partir da distância até o alvo e termina no instante exato (medido em µs), de
+// modo que ir de A até B e voltar de B até A consome exatamente o mesmo tempo
+// (com CLOSE_TIME_MS = OPEN_TIME_MS). Os servos ficam parados até o alvo recebido
+// (SET) se afastar da posição estimada mais que DEADBAND; os extremos aberto e
+// fechado são sempre alcançados por completo.
 
 constexpr int32_t FULL = 1000000L;  // posição em milionésimos do curso (0-1000 x 1000)
 
@@ -14,12 +18,14 @@ bool hardwareReady = false;
 bool armed = false;
 bool haveSequence = false;
 uint16_t lastSequence = 0;
-int32_t position[5];   // posição estimada; persiste entre ARM/STOP (o servo não se move desarmado)
-int32_t target[5];
-int8_t motion[5];      // +1 fechando, -1 abrindo, 0 parado
-uint16_t lastPulse[5]; // último pulso escrito (0 = sem pulso)
+int32_t position[5];    // posição estimada (válida quando parado / no início do giro)
+int32_t target[5];      // alvo recebido pelo SET
+int8_t motion[5];       // +1 fechando, -1 abrindo, 0 parado
+int32_t moveTo[5];      // destino do giro em andamento
+uint32_t moveStart[5];  // micros() no início do giro
+uint32_t moveTime[5];   // duração do giro em µs
+uint16_t lastPulse[5];  // último pulso escrito (0 = sem pulso)
 uint32_t lastCommand = 0;
-uint32_t lastStep = 0;
 char input[96];
 uint8_t inputLength = 0;
 bool overflow = false;
@@ -47,36 +53,48 @@ uint16_t stopPulse(uint8_t finger) {
 }
 
 uint16_t pulseFor(uint8_t finger) {
-  if (!motion[finger]) return stopPulse(finger);
-  return uint16_t(int32_t(NEUTRAL_US[finger]) + motion[finger] * int32_t(CLOSE_SPEED_US[finger]));
+  if (motion[finger] > 0) return uint16_t(int32_t(NEUTRAL_US[finger]) + CLOSE_SPEED_US[finger]);
+  if (motion[finger] < 0) return uint16_t(int32_t(NEUTRAL_US[finger]) - OPEN_SPEED_US[finger]);
+  return stopPulse(finger);
 }
 
-int32_t stepSize(uint8_t finger, int8_t direction, uint32_t elapsed) {
-  uint16_t travel = direction > 0 ? CLOSE_TIME_MS[finger] : OPEN_TIME_MS[finger];
-  return int32_t(FULL / travel * elapsed);
+uint16_t travelMs(uint8_t finger, int8_t direction) {
+  return direction > 0 ? CLOSE_TIME_MS[finger] : OPEN_TIME_MS[finger];
 }
 
-// Soma à posição estimada o trecho percorrido durante "elapsed" ms de giro.
-void advance(uint8_t finger, uint32_t elapsed) {
-  if (!motion[finger]) return;
-  if (elapsed > 200) elapsed = 200;
-  position[finger] += motion[finger] * stepSize(finger, motion[finger], elapsed);
-  if (position[finger] < 0) position[finger] = 0;
-  if (position[finger] > FULL) position[finger] = FULL;
+// Distância (0..FULL) -> tempo de giro em µs, e o inverso.
+uint32_t distanceToMicros(uint8_t finger, int8_t direction, int32_t distance) {
+  return uint32_t(uint64_t(distance) * travelMs(finger, direction) / 1000UL);
+}
+
+int32_t microsToDistance(uint8_t finger, int8_t direction, uint32_t elapsed) {
+  uint64_t distance = uint64_t(elapsed) * 1000UL / travelMs(finger, direction);
+  return distance > uint64_t(FULL) ? FULL : int32_t(distance);
+}
+
+// Posição estimada agora, inclusive no meio de um giro.
+int32_t currentPosition(uint8_t finger, uint32_t now) {
+  if (!motion[finger]) return position[finger];
+  uint32_t elapsed = now - moveStart[finger];
+  if (elapsed >= moveTime[finger]) return moveTo[finger];
+  int32_t p = position[finger] + motion[finger] * microsToDistance(finger, motion[finger], elapsed);
+  return p < 0 ? 0 : (p > FULL ? FULL : p);
+}
+
+// Interrompe o giro registrando onde o dedo parou.
+void halt(uint8_t finger, uint32_t now) {
+  position[finger] = currentPosition(finger, now);
+  motion[finger] = 0;
 }
 
 void disableOutputs() {
-  // Contabiliza o giro desde o último passo antes de parar.
-  if (armed) {
-    uint32_t elapsed = millis() - lastStep;
-    for (uint8_t i = 0; i < 5; ++i) advance(i, elapsed);
-  }
+  uint32_t now = micros();
   digitalWrite(OE_PIN, HIGH);
   // Também zera os registradores do PCA9685: sem isso, o último pulso fica gravado
   // e volta a ser emitido quando o Arduino reinicia (ao abrir a porta serial o OE
   // fica solto até o setup), fazendo os servos girarem antes de qualquer comando.
   for (uint8_t i = 0; i < 5; ++i) {
-    motion[i] = 0;
+    halt(i, now);
     target[i] = position[i];
     if (hardwareReady) writePulse(i, 0);
   }
@@ -87,15 +105,16 @@ void disableOutputs() {
 bool configurationValid() {
   for (uint8_t i = 0; i < 5; ++i) {
     int32_t closing = int32_t(NEUTRAL_US[i]) + CLOSE_SPEED_US[i];
-    int32_t opening = int32_t(NEUTRAL_US[i]) - CLOSE_SPEED_US[i];
-    if (CHANNELS[i] > 15 || CLOSE_SPEED_US[i] == 0 ||
+    int32_t opening = int32_t(NEUTRAL_US[i]) - OPEN_SPEED_US[i];
+    bool sameSign = (CLOSE_SPEED_US[i] > 0) == (OPEN_SPEED_US[i] > 0);
+    if (CHANNELS[i] > 15 || CLOSE_SPEED_US[i] == 0 || OPEN_SPEED_US[i] == 0 || !sameSign ||
         NEUTRAL_US[i] < PULSE_MIN_US || NEUTRAL_US[i] > PULSE_MAX_US ||
         closing < PULSE_MIN_US || closing > PULSE_MAX_US ||
         opening < PULSE_MIN_US || opening > PULSE_MAX_US ||
-        CLOSE_TIME_MS[i] < STEP_INTERVAL_MS || OPEN_TIME_MS[i] < STEP_INTERVAL_MS) return false;
+        CLOSE_TIME_MS[i] == 0 || OPEN_TIME_MS[i] == 0) return false;
     for (uint8_t j = 0; j < i; ++j) if (CHANNELS[i] == CHANNELS[j]) return false;
   }
-  return DEADBAND <= 1000;
+  return DEADBAND < 500;
 }
 
 int hexDigit(char c) {
@@ -153,7 +172,6 @@ void processLine(char *line) {
       digitalWrite(OE_PIN, LOW);
       armed = true;
       haveSequence = false;
-      lastStep = millis();
     }
     lastCommand = millis();
     reply("ARMED");
@@ -179,7 +197,14 @@ void processLine(char *line) {
   if (!armed) { reply("ERR,DISARMED"); return; }
   uint16_t delta = sequence - lastSequence;
   if (haveSequence && (delta == 0 || delta >= 32768)) { reply("ERR,SEQUENCE"); return; }
-  for (uint8_t i = 0; i < 5; ++i) target[i] = int32_t(values[i]) * 1000L;
+  for (uint8_t i = 0; i < 5; ++i) {
+    // Perto dos extremos, vai exatamente ao extremo: garante que "mão aberta"
+    // devolva o dedo à posição inicial e "mão fechada" feche por completo.
+    uint16_t v = values[i];
+    if (v <= DEADBAND) v = 0;
+    else if (v >= 1000 - DEADBAND) v = 1000;
+    target[i] = int32_t(v) * 1000L;
+  }
   lastSequence = sequence;
   haveSequence = true;
   lastCommand = millis();
@@ -188,20 +213,37 @@ void processLine(char *line) {
   reply(response);
 }
 
-// Atualiza posição estimada e decide, por dedo, se gira ou fica parado.
-bool stepMotion(uint32_t elapsed) {
+// Decide, por dedo, se começa, ajusta, termina ou mantém o giro.
+bool updateMotion(uint32_t now) {
   for (uint8_t i = 0; i < 5; ++i) {
-    advance(i, elapsed);
     if (motion[i]) {
-      // Para quando faltar menos de meio passo (evita passar do alvo).
-      int32_t remaining = (target[i] - position[i]) * motion[i];
-      if (remaining <= stepSize(i, motion[i], STEP_INTERVAL_MS) / 2) motion[i] = 0;
+      if (now - moveStart[i] >= moveTime[i]) {
+        // Fim do giro no tempo calculado: a posição é exatamente o destino.
+        position[i] = moveTo[i];
+        motion[i] = 0;
+      } else if (moveTo[i] != target[i]) {
+        if ((target[i] - currentPosition(i, now)) * motion[i] > 0) {
+          // Alvo mudou mas continua à frente, no mesmo sentido: só recalcula o fim.
+          moveTo[i] = target[i];
+          moveTime[i] = distanceToMicros(i, motion[i], (moveTo[i] - position[i]) * motion[i]);
+        } else {
+          // Alvo ficou para trás: para aqui e replaneja abaixo.
+          halt(i, now);
+        }
+      }
     }
     if (!motion[i]) {
       int32_t error = target[i] - position[i];
-      int32_t threshold = int32_t(DEADBAND) * 1000L;
-      if (error > threshold) motion[i] = 1;
-      else if (error < -threshold) motion[i] = -1;
+      int32_t distance = error < 0 ? -error : error;
+      bool endpoint = target[i] == 0 || target[i] == FULL;
+      // Fora dos extremos exige passar do DEADBAND; nos extremos vai até o fim
+      // (ignora só restos menores que 0,1% do curso).
+      if (distance > (endpoint ? 1000L : int32_t(DEADBAND) * 1000L)) {
+        motion[i] = error > 0 ? 1 : -1;
+        moveTo[i] = target[i];
+        moveStart[i] = now;
+        moveTime[i] = distanceToMicros(i, motion[i], distance);
+      }
     }
     uint16_t pulse = pulseFor(i);
     if (pulse != lastPulse[i] && !writePulse(i, pulse)) return false;
@@ -219,7 +261,7 @@ void setup() {
 #endif
   // Posição inicial assumida: dedos abertos.
   for (uint8_t i = 0; i < 5; ++i) {
-    position[i] = target[i] = 0;
+    position[i] = target[i] = moveTo[i] = 0;
     motion[i] = 0;
     lastPulse[i] = 0;
   }
@@ -234,8 +276,8 @@ void setup() {
 }
 
 void loop() {
-  // Limita o trabalho de recepção para não impedir o watchdog e o controle.
-  uint8_t budget = 64;
+  // Limita o trabalho de recepção para não atrasar o fim dos giros.
+  uint8_t budget = 16;
   while (Serial.available() && budget--) {
     char c = Serial.read();
     if (c == '\n') {
@@ -248,16 +290,13 @@ void loop() {
       if (!overflow) input[inputLength++] = c;
     }
   }
-  uint32_t now = millis();
-  if (armed && uint32_t(now - lastCommand) >= COMMAND_TIMEOUT_MS) {
+  if (armed && uint32_t(millis() - lastCommand) >= COMMAND_TIMEOUT_MS) {
     disableOutputs();
     reply("FAULT,TIMEOUT");
   }
-  if (armed && uint32_t(now - lastStep) >= STEP_INTERVAL_MS) {
-    uint32_t elapsed = now - lastStep;
-    lastStep = now;
-    if (!stepMotion(elapsed)) {
-      disableOutputs(); reply("FAULT,I2C");
-    }
+  // Verificado a cada volta do loop (não mais a cada 20 ms): o giro termina
+  // poucos µs depois do tempo calculado, igual nos dois sentidos.
+  if (armed && !updateMotion(micros())) {
+    disableOutputs(); reply("FAULT,I2C");
   }
 }
