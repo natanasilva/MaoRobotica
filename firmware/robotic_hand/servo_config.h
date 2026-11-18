@@ -31,8 +31,8 @@ constexpr uint16_t NEUTRAL_US[5] = {1500,   1500,     1500, 1500,  1500};
 constexpr int16_t CLOSE_SPEED_US[5] = {200,  200,      200,  200,   200};
 // Tempo (ms) girando com essa velocidade para ir de aberto a fechado e de fechado
 // a aberto. Meça com firmware/teste_servos (comando r <us> <ms>).
-constexpr uint16_t CLOSE_TIME_MS[5] = {1000, 1000,     1000, 1000,  1000};
-constexpr uint16_t OPEN_TIME_MS[5]  = {1000, 1000,     1000, 1000,  1000};
+constexpr uint16_t CLOSE_TIME_MS[5] = {500,  500,      500,  500,   500};
+constexpr uint16_t OPEN_TIME_MS[5]  = {500,  500,      500,  500,   500};
 // Variação mínima do dedo (escala 0-1000, 60 = 6%) para o servo começar a girar.
 // Evita que o ruído da detecção faça o servo se mexer com a mão parada.
 constexpr uint16_t DEADBAND = 60;
