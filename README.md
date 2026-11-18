@@ -64,7 +64,7 @@ O polegar combina flexão e proximidade à base do mínimo. Trata-se de uma apro
 
 ## Montagem elétrica
 
-Referência inicial: **Arduino Uno R3 ou Nano clássico de 5 V**, PCA9685 em `0x40`, cinco servos posicionais e fonte externa dimensionada para eles. Não usar servos de rotação contínua para esse controle de posição. Para outras placas, confirme pinagem I²C e tensão lógica antes de ligar.
+Referência inicial: **Arduino Uno R3 ou Nano clássico de 5 V**, PCA9685 em `0x40`, cinco servos de 360° (rotação contínua) e fonte externa dimensionada para eles. Para outras placas, confirme pinagem I²C e tensão lógica antes de ligar.
 
 | Origem | Destino |
 |---|---|
@@ -86,28 +86,30 @@ O sinal OE faz parte desta implementação. Muitos módulos têm pull-down em OE
 
 Abra `firmware/robotic_hand/robotic_hand.ino` na Arduino IDE. Instale **Adafruit PWM Servo Driver Library** pelo gerenciador de bibliotecas, incluindo **Adafruit BusIO**. Selecione a placa e a porta e carregue o sketch.
 
-As configurações ficam em `firmware/robotic_hand/servo_config.h`:
+As configurações ficam em `firmware/robotic_hand/servo_config.h`. A montagem atual usa **cinco servos de 360° (rotação contínua)**: neles o pulso define velocidade e sentido, não posição. Como não há sensor, o firmware estima a posição de cada dedo pelo tempo que o servo girou, partindo de **dedos abertos ao ligar o Arduino** (monte e ligue a mão com os dedos abertos).
 
 - `CHANNELS`: canal de cada dedo, sem repetição.
-- `OPEN_US` e `CLOSED_US`: pulsos medidos para abertura e fechamento. A inversão é feita trocando os extremos.
-- `PWM_HZ`: 50 Hz inicialmente; confirme a frequência suportada pelos servos.
-- `MAX_STEP_US`: passo máximo a cada 20 ms. Com 20 µs (1000 µs/s), o curso completo leva cerca de 2,2 s; aumente para os dedos acompanharem a mão mais rápido.
+- `NEUTRAL_US`: pulso em que o servo fica parado (~1500 µs). Ajuste se ele girar devagar no neutro.
+- `CLOSE_SPEED_US`: quanto somar ao neutro para fechar o dedo (para abrir, o firmware subtrai). Valor maior = mais rápido. Dedo gira ao contrário: troque o sinal.
+- `CLOSE_TIME_MS` / `OPEN_TIME_MS`: tempo girando nessa velocidade para ir de aberto a fechado e de volta. Meça com o sketch de teste (`r <us> <ms>`).
+- `DEADBAND`: variação mínima do dedo (0–1000) para o servo começar a girar; evita que o ruído da câmera mova os servos com a mão parada.
+- `STOP_WITHOUT_PULSE`: `true` corta o pulso quando o servo está parado (não “arrasta”); `false` envia `NEUTRAL_US`.
 - `CALIBRATED`: `true` libera o `ARM`; com `false` o firmware recusa o acionamento.
 
-A configuração atual usa servos SG90 de 180° nos cinco dedos, com 500–2400 µs em todos (curso completo do SG90; além disso ele força o batente e pode espanar as engrenagens). `PULSE_MIN_US`/`PULSE_MAX_US` limitam os valores aceitos pelo firmware. Se um dedo fechar quando deveria abrir, troque os dois valores dele. Se um servo forçar ou zumbir em um extremo (batente mecânico ou fim de curso), reduza aquele extremo em passos de 50 µs. Para comissionar:
+Comportamento: ao armar, todos os servos ficam **parados** na posição em que estão. Eles só giram quando a câmera detecta que o dedo mudou mais que `DEADBAND` em relação à posição estimada, e param ao chegar ao alvo. Ao desarmar (perda da mão, pausa, timeout), os servos param e a posição estimada é mantida. Erros de tempo se acumulam com o uso: se os dedos se desalinharem, abra-os manualmente e reinicie o Arduino. Ao desarmar, o firmware também zera os pulsos gravados no PCA9685, para que um reset do Arduino (que ocorre ao abrir a porta serial) não reenvie o último pulso. Para comissionar:
 
 1. Desacople os cabos/elos e conecte inicialmente apenas um servo. Consulte os pulsos e a tensão especificados pelo fabricante.
-2. Configure inicialmente os dois extremos desse servo para um pulso central conhecido, e coloque `CALIBRATED = true` para o ensaio de bancada. Regrave o firmware.
-3. Use o comando manual abaixo. Desenergize antes de mudar ligações. Amplie os extremos em pequenos passos, regravando o firmware, e encontre a faixa necessária sem atingir batentes.
-4. Repita por dedo, confira o sentido, acople a mecânica sem tensão excessiva e reduza os limites se necessário. Só então conecte os cinco servos e execute com visão.
+2. Com o sketch de teste, encontre o neutro (servo parado) e meça, com `r <us> <ms>`, o tempo para fechar e para abrir o dedo. Copie para `NEUTRAL_US`, `CLOSE_SPEED_US`, `CLOSE_TIME_MS` e `OPEN_TIME_MS`. Comece com tempos menores que o medido para não forçar o fim do curso.
+3. Grave `robotic_hand.ino` com os dedos abertos e use o comando manual abaixo com valores pequenos. Desenergize antes de mudar ligações.
+4. Repita por dedo, confira o sentido (troque o sinal de `CLOSE_SPEED_US` se invertido) e só então conecte os cinco servos e execute com visão.
 
 ### Sketch de teste dos servos
 
 `firmware/teste_servos/teste_servos.ino` é um sketch separado para testar cada servo pelo Monitor Serial (115200 baud), sem Python nem webcam. Grave-o no lugar do firmware principal, digite `ajuda` e use `d <dedo>`, `g <graus>`, `p <us>`, `+`/`-`, `a`/`f` para marcar aberto/fechado, `v` para varrer e `l` para imprimir as linhas `OPEN_US`/`CLOSED_US` prontas para o `servo_config.h`. `x` desliga as saídas. Depois, regrave `robotic_hand.ino`.
 
-Servo de 360 graus (rotação contínua): o pulso define velocidade e sentido, não posição. A montagem atual não usa nenhum (`DEDO_360 = -1`). Se trocar algum dedo por um servo desse tipo, indique-o em `DEDO_360` e use `r <us> <ms>` para girá-lo por um tempo. No firmware principal, indique-o em `CONTINUOUS_FINGER` (hoje `-1`): ele passa a ser controlado por tempo de giro, com a posição estimada sem sensor, girando a `CONT_SPEED_US` do neutro (`CONT_NEUTRAL_US`) durante a fração de `CONT_TRAVEL_MS` correspondente. Meça quanto tempo o dedo leva para fechar e ajuste `CONT_TRAVEL_MS`; o erro se acumula com o uso e, ao reiniciar, o firmware assume o dedo aberto.
+Servos de 360 graus (rotação contínua): os dedos que usam esse tipo ficam marcados em `SERVO_360` (atualmente todos). Use `p 1500`/`c` para achar o neutro e `r <us> <ms>` (ex.: `r 1700 1000`) para girar por um tempo e medir quanto leva para fechar/abrir o dedo; esses valores vão para `NEUTRAL_US`, `CLOSE_SPEED_US`, `CLOSE_TIME_MS` e `OPEN_TIME_MS`.
 
-Sem sensores externos, o Arduino não conhece a posição real após ligar ou desabilitar os servos. **O primeiro pulso ao ativar pode reposicionar o eixo**, mesmo com a rampa aplicada aos comandos seguintes. Não há controle de força nem detecção de obstáculos.
+Sem sensores externos, o Arduino não conhece a posição real dos servos de 360°: ela é apenas estimada pelo tempo de giro e assume dedos abertos ao ligar. Não há fim de curso no servo, então tempos maiores que o curso real forçam a mecânica. Não há controle de força nem detecção de obstáculos.
 
 ## Operar com Arduino
 

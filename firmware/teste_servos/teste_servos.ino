@@ -15,10 +15,11 @@ const uint16_t PWM_HZ = 50;
 const uint8_t CHANNELS[5] = {0, 1, 2, 3, 4};
 const char *const NOMES[5] = {"polegar", "indicador", "medio", "anelar", "minimo"};
 
-// Qual dedo usa o servo de 360 graus (0 = polegar ... 4 = minimo; -1 = nenhum).
+// Quais dedos usam servo de 360 graus (polegar, indicador, medio, anelar, minimo).
 // Num servo de 360 graus (rotação contínua) o pulso controla VELOCIDADE e
 // sentido, não posição: 1500 us = parado, abaixo gira para um lado, acima para o outro.
-const int8_t DEDO_360 = -1;  // todos SG90 de 180 graus
+// Todos os dedos usam servos de 360 graus.
+const bool SERVO_360[5] = {true, true, true, true, true};
 
 // Faixa usada para converter pulso <-> graus nos servos de 180 graus.
 // Muitos servos (MG996R, MG90S, SG90) ficam perto de 500..2500 us, mas confira o seu.
@@ -41,12 +42,13 @@ uint16_t atualUs[5], alvoUs[5];
 int16_t abertoUs[5], fechadoUs[5]; // -1 = ainda não marcado
 uint32_t ultimoPasso = 0;
 uint32_t pararGiroEm = 0;          // para o servo 360 após "gira"
+uint8_t dedoGiro = 0;              // dedo que está girando com "r"
 bool varrendo = false;
 bool varrendoParaFechado = true;
 char linha[48];
 uint8_t tam = 0;
 
-bool eh360(uint8_t d) { return int8_t(d) == DEDO_360; }
+bool eh360(uint8_t d) { return SERVO_360[d]; }
 
 uint16_t grausParaUs(float g) {
   return PULSO_0_GRAUS + (PULSO_180_GRAUS - PULSO_0_GRAUS) * g / 180.0;
@@ -132,8 +134,8 @@ void imprimeConfig() {
     }
     Serial.println(F("};"));
   }
-  if (DEDO_360 >= 0)
-    Serial.println(F("ATENCAO: o dedo 360 nao tem posicao; o firmware principal vai faze-lo girar sem parar."));
+  Serial.println(F("Servos 360: no firmware principal use NEUTRAL_US, CLOSE_SPEED_US e"));
+  Serial.println(F("CLOSE_TIME_MS/OPEN_TIME_MS (meca com 'r <us> <ms>'), nao OPEN_US/CLOSED_US."));
 }
 
 void ajuda() {
@@ -200,7 +202,7 @@ void processa(char *cmd) {
   else if (!strcmp(op, "r") && a1 && a2) {
     if (!eh360(dedo)) { Serial.println(F("'r' e para o servo 360.")); return; }
     defineAlvo(atoi(a1));
-    if (ativo && alvoUs[dedo] == uint16_t(atoi(a1))) pararGiroEm = millis() + atol(a2);
+    if (ativo && alvoUs[dedo] == uint16_t(atoi(a1))) { dedoGiro = dedo; pararGiroEm = millis() + atol(a2); }
   }
   else if (!strcmp(op, "l")) { mostraEstado(); imprimeConfig(); }
   else Serial.println(F("Comando desconhecido. Digite 'ajuda'."));
@@ -241,7 +243,7 @@ void loop() {
   uint32_t agora = millis();
   if (pararGiroEm && int32_t(agora - pararGiroEm) >= 0) {
     pararGiroEm = 0;
-    uint8_t d = uint8_t(DEDO_360);
+    uint8_t d = dedoGiro;
     alvoUs[d] = atualUs[d] = NEUTRO_360;
     escrevePulso(d, NEUTRO_360);
     Serial.println(F("Servo 360 parado."));
